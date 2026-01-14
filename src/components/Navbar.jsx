@@ -123,7 +123,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
         className="flex items-center gap-3 hover:cursor-pointer group"
       >
         <img
-          src="/src/assets/TaskFlow.png"
+          src={TaskFlowLogo}
           alt="TaskFlow Logo"
           className="h-10 w-10 object-contain group-hover:scale-110 transition-transform duration-200"
         />
