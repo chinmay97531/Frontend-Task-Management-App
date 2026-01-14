@@ -48,7 +48,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
       <div
         onClick={() => {
           setModalOpen(() => {false});
-          setIsOpen(false);
+          setIsOpen(() => {false});
           refreshTasks();
         }}
         className="text-3xl font-bold text-white m-2 p-5 pl-10 hover:cursor-pointer"
