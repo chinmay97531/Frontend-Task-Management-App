@@ -110,8 +110,9 @@ export function Dashboard() {
     );
   }
 
-  const doneCount = tasks.filter((t) => t.status === "DONE").length;
-  const doingCount = tasks.filter((t) => t.status === "DOING").length;
+  const safeTasks = Array.isArray(tasks) ? tasks : [];
+  const doneCount = safeTasks.filter((t) => t.status === "DONE").length;
+  const doingCount = safeTasks.filter((t) => t.status === "DOING").length;
 
   return (
     <div className="min-h-screen flex flex-col items-center tf-app-bg text-stone-50 font-sans">
@@ -140,14 +141,14 @@ export function Dashboard() {
         )}
 
       <div className="relative z-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        {tasks.length > 0 && (
+        {safeTasks.length > 0 && (
           <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 tf-animate-fade-up">
             <div>
               <h2 className="font-display text-3xl font-semibold tracking-tight bg-gradient-to-r from-teal-300 via-teal-400 to-coral-400 bg-clip-text text-transparent">
                 Your Tasks
               </h2>
               <p className="mt-1 text-sm text-stone-500">
-                {tasks.length} total · {doingCount} in progress · {doneCount}{" "}
+                {safeTasks.length} total · {doingCount} in progress · {doneCount}{" "}
                 done
               </p>
             </div>
@@ -162,7 +163,7 @@ export function Dashboard() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tasks.length === 0 ? (
+          {safeTasks.length === 0 ? (
             <div className="md:col-span-2 lg:col-span-3 rounded-3xl tf-glass shadow-[0_16px_40px_rgba(0,0,0,0.25)] p-12 sm:p-16 tf-animate-fade-up">
               <div className="flex flex-col items-center text-center">
                 <div className="mb-6 grid h-20 w-20 place-items-center rounded-2xl bg-gradient-to-br from-teal-400/20 to-coral-500/20 ring-1 ring-white/15 shadow-sm">
@@ -227,7 +228,7 @@ export function Dashboard() {
               </div>
             </div>
           ) : (
-            tasks.map((task, index) => (
+            safeTasks.map((task, index) => (
               <div
                 key={task._id || index}
                 className="tf-animate-fade-up"

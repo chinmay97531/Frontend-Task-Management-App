@@ -129,6 +129,8 @@ export function NavBar({
   const handleFilter = async (filterType) => {
     try {
       const token = localStorage.getItem("token");
+      const isCleanup =
+        filterType === "deleteCompleted" || filterType === "deletePastDue";
 
       const response = await axios.post(
         BACKEND_URL + "/filter",
@@ -139,19 +141,31 @@ export function NavBar({
           },
         }
       );
-      setTasks(response.data.tasks);
-      setAllTasks(response.data.tasks);
+
       setFilterOpen(false);
       setIsSearching(false);
       if (searchRef.current) {
         searchRef.current.value = "";
       }
 
-      if (filterType == "deleteCompleted" || filterType == "deletePastDue") {
+      if (isCleanup) {
+        // Prefer tasks from API; fall back to a silent refresh if omitted
+        if (Array.isArray(response.data.tasks)) {
+          setTasks(response.data.tasks);
+          setAllTasks(response.data.tasks);
+        } else {
+          await refreshTasks();
+          await fetchAllTasks();
+        }
         toast.success("Cleanup complete.");
-        refreshTasks();
         return;
       }
+
+      const nextTasks = Array.isArray(response.data.tasks)
+        ? response.data.tasks
+        : [];
+      setTasks(nextTasks);
+      setAllTasks(nextTasks);
       toast.success("Filter applied.");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Could not apply filter."));
