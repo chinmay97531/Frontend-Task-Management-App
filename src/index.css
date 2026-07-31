@@ -1,1 +1,239 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+
+  /* Primary: logo cyan → blue (teal-* utilities) */
+  --color-teal-950: #06101f;
+  --color-teal-900: #0a1a33;
+  --color-teal-800: #12305a;
+  --color-teal-700: #1d4f9c;
+  --color-teal-600: #2b6fd4;
+  --color-teal-500: #3e82f7;
+  --color-teal-400: #48c6ef;
+  --color-teal-300: #6fe3e1;
+  --color-teal-200: #a5f0ef;
+  --color-teal-100: #d4f7f6;
+  --color-teal-50: #ecfcfb;
+
+  /* Accent: logo violet (coral-* utilities) */
+  --color-coral-700: #6b46c1;
+  --color-coral-600: #805ad5;
+  --color-coral-500: #9f7aea;
+  --color-coral-400: #b794f4;
+  --color-coral-100: #e9d8fd;
+  --color-coral-50: #faf5ff;
+
+  /* Surfaces: logo dark slate (stone-* utilities) */
+  --color-stone-50: #e8eef8;
+  --color-stone-100: #c5d0e4;
+  --color-stone-200: #8b9bb8;
+  --color-stone-300: #6b7c99;
+  --color-stone-400: #53627a;
+  --color-stone-500: #8b9bb8;
+  --color-stone-600: #a8b6cc;
+  --color-stone-700: #c5d0e4;
+  --color-stone-800: #1a2236;
+  --color-stone-900: #0f1524;
+
+  --color-amber-500: #f59e0b;
+  --color-amber-100: #fef3c7;
+  --color-rose-700: #fb7185;
+  --color-rose-50: #3f1d2a;
+  --color-rose-100: #5c2436;
+}
+
+:root {
+  --tf-bg: #0b1220;
+  --tf-surface: rgba(255, 255, 255, 0.06);
+  --tf-ink: #e8eef8;
+  --tf-muted: #8b9bb8;
+  --tf-border: rgba(255, 255, 255, 0.12);
+  --tf-primary: #3e82f7;
+  --tf-primary-soft: #48c6ef;
+  --tf-accent: #9f7aea;
+  --tf-accent-soft: #b794f4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--tf-ink);
+  background: var(--tf-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes tf-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tf-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tf-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tf-pulse-soft {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.04);
+  }
+}
+
+.tf-animate-fade-up {
+  animation: tf-fade-up 0.7s ease-out both;
+}
+
+.tf-animate-fade-in {
+  animation: tf-fade-in 0.45s ease-out both;
+}
+
+.tf-animate-slide-in {
+  animation: tf-slide-in 0.4s ease-out both;
+}
+
+.tf-delay-1 {
+  animation-delay: 0.1s;
+}
+
+.tf-delay-2 {
+  animation-delay: 0.2s;
+}
+
+.tf-delay-3 {
+  animation-delay: 0.3s;
+}
+
+.tf-delay-4 {
+  animation-delay: 0.4s;
+}
+
+/* Matches logo: cyan → blue → violet on deep slate */
+.tf-auth-atmosphere {
+  background:
+    radial-gradient(ellipse 75% 55% at 20% 25%, rgba(72, 198, 239, 0.35), transparent 55%),
+    radial-gradient(ellipse 65% 50% at 80% 70%, rgba(159, 122, 234, 0.32), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(62, 130, 247, 0.2), transparent 60%),
+    linear-gradient(160deg, #0f172a 0%, #1a1b2e 45%, #2a1f3d 100%);
+}
+
+.tf-auth-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, black, transparent);
+}
+
+.tf-app-bg {
+  background:
+    radial-gradient(ellipse 80% 45% at 15% -5%, rgba(72, 198, 239, 0.14), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(159, 122, 234, 0.12), transparent 45%),
+    radial-gradient(ellipse 50% 35% at 50% 100%, rgba(62, 130, 247, 0.08), transparent 50%),
+    linear-gradient(180deg, #0b1220 0%, #12182a 55%, #16122a 100%);
+}
+
+.tf-glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.tf-card-lift {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.tf-card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  border-color: rgba(72, 198, 239, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tf-btn-primary {
+  background: linear-gradient(135deg, #48c6ef 0%, #3e82f7 55%, #805ad5 100%);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(62, 130, 247, 0.28);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.tf-btn-primary:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px rgba(72, 198, 239, 0.35);
+}
+
+.tf-btn-primary:active {
+  transform: scale(0.985);
+}
+
+.tf-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.tf-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e8eef8;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.tf-input::placeholder {
+  color: #6b7c99;
+}
+
+.tf-input:focus {
+  border-color: rgba(72, 198, 239, 0.55);
+  box-shadow: 0 0 0 3px rgba(62, 130, 247, 0.2);
+  background: rgba(255, 255, 255, 0.09);
+}

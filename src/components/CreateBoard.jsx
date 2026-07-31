@@ -13,6 +13,7 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
   });
 
   const [assignee, setAssignee] = useState({ name: "", email: "" });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -42,6 +43,7 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
 
   const createBoard = async () => {
     try {
+      setSubmitting(true);
       const token = localStorage.getItem("token");
 
       const payload = {
@@ -52,8 +54,7 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
         headers: {
           token: token,
         },
-      }
-    );
+      });
       console.log(res.data);
 
       setModalOpen(false);
@@ -68,6 +69,8 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
       refreshTasks();
     } catch (error) {
       console.error("Error creating board:", error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -76,136 +79,187 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center bg-gradient-to-br from-[#1a202c] via-[#2d3748] to-[#1a202c] w-full max-w-2xl mx-auto gap-6 rounded-3xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.5)] p-8 backdrop-blur-sm">
-      <h1 className="text-2xl font-semibold text-white mb-2">Create a new board</h1>
-
-      <div className="w-full space-y-5">
-        <div>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            placeholder="Title"
-            className="w-full h-12 bg-white/10 border border-white/20 text-white placeholder:text-gray-400 px-4 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all"
-          />
-        </div>
-
-        <div>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            rows="4"
-            placeholder="Description"
-            className="w-full min-h-[100px] bg-white/10 border border-white/20 text-white placeholder:text-gray-400 px-4 py-3 rounded-xl resize-none outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all"
-          />
-        </div>
-
-        <div>
-          <input
-            type="text"
-            name="label"
-            value={formData.label}
-            onChange={handleInputChange}
-            placeholder="Label (e.g., bug, urgent, feature)"
-            className="w-full h-12 bg-white/10 border border-white/20 text-white placeholder:text-gray-400 px-4 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
-          <label className="text-white font-medium text-sm sm:text-base">Due Date:</label>
-          <input
-            type="date"
-            name="dueDate"
-            value={formData.dueDate}
-            onChange={handleInputChange}
-            className="w-full sm:w-auto h-12 bg-white/10 border border-white/20 text-white px-4 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all [color-scheme:dark]"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-          <label className="text-white font-medium text-sm sm:text-base">Status:</label>
-          <div className="flex flex-row justify-start items-center gap-6">
-            {["DO", "DOING", "DONE"].map((statusOption) => (
-              <label key={statusOption} className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="status"
-                  value={statusOption}
-                  checked={formData.status === statusOption}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 accent-cyan-400 cursor-pointer"
-                />
-                <span className="text-white text-sm group-hover:text-cyan-200 transition-colors">
-                  {statusOption.toLowerCase()}
-                </span>
-              </label>
-            ))}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0b1220]/70 backdrop-blur-sm tf-animate-fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setModalOpen(false);
+      }}
+    >
+      <div className="flex flex-col w-full max-w-2xl max-h-[90vh] overflow-y-auto gap-5 rounded-3xl tf-glass shadow-[0_24px_60px_rgba(0,0,0,0.45)] p-6 sm:p-8 tf-animate-fade-up">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl font-semibold text-stone-50">
+              Create a new task
+            </h1>
+            <p className="mt-1 text-sm text-stone-500">
+              Add details, set a status, and invite assignees.
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setModalOpen(false)}
+            className="h-9 w-9 rounded-xl border border-white/15 text-stone-500 hover:bg-white/10 hover:text-stone-50 transition-colors"
+            aria-label="Close"
+          >
+            ×
+          </button>
         </div>
 
-        <div className="flex flex-col w-full gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-          <h2 className="text-white font-medium text-sm sm:text-base">Assign to:</h2>
-          <div className="flex flex-col sm:flex-row gap-3">
+        <div className="w-full space-y-5">
+          <div>
+            <label className="block text-sm font-medium text-stone-600 mb-1.5">
+              Title
+            </label>
             <input
               type="text"
               name="name"
-              value={assignee.name}
-              onChange={handleAssigneeChange}
-              placeholder="Name"
-              className="flex-1 h-12 bg-white/10 border border-white/20 text-white placeholder:text-gray-400 px-4 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="What needs to get done?"
+              className="tf-input w-full h-12 px-4 rounded-xl"
             />
-            <input
-              type="email"
-              name="email"
-              value={assignee.email}
-              onChange={handleAssigneeChange}
-              placeholder="Email"
-              className="flex-1 h-12 bg-white/10 border border-white/20 text-white placeholder:text-gray-400 px-4 rounded-xl outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/50 transition-all"
-            />
-            <button
-              onClick={addAssignee}
-              className="bg-gradient-to-r from-cyan-500/80 to-indigo-500/80 hover:from-cyan-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg hover:shadow-cyan-500/25 whitespace-nowrap"
-            >
-              Add
-            </button>
           </div>
-          
-          {/* Show assigned people */}
-          {formData.assignedTo.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <p className="text-gray-400 text-xs mb-2">Assigned members:</p>
-              <div className="flex flex-wrap gap-2">
-                {formData.assignedTo.map((person, index) => (
-                  <div
-                    key={index}
-                    className="inline-flex items-center gap-2 bg-cyan-500/20 border border-cyan-400/30 text-cyan-100 px-3 py-1.5 rounded-lg text-sm"
-                  >
-                    <span className="font-medium">{person.name}</span>
-                    <span className="text-cyan-300/70">({person.email})</span>
-                    <button
-                      onClick={() => {
-                        const updated = formData.assignedTo.filter((_, i) => i !== index);
-                        setFormData({ ...formData, assignedTo: updated });
-                      }}
-                      className="ml-1 text-cyan-300 hover:text-white transition-colors"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
 
-        <button
-          onClick={createBoard}
-          className="w-full h-12 mt-4 bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 text-white font-semibold text-base rounded-xl border-none outline-none transition-all duration-200 shadow-lg hover:shadow-cyan-500/30 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
-        >
-          Create Board
-        </button>
+          <div>
+            <label className="block text-sm font-medium text-stone-600 mb-1.5">
+              Description
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              rows="4"
+              placeholder="Add context or acceptance criteria"
+              className="tf-input w-full min-h-[100px] px-4 py-3 rounded-xl resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-600 mb-1.5">
+              Label
+            </label>
+            <input
+              type="text"
+              name="label"
+              value={formData.label}
+              onChange={handleInputChange}
+              placeholder="e.g., bug, urgent, feature"
+              className="tf-input w-full h-12 px-4 rounded-xl"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-white/5 rounded-xl border border-white/10">
+            <label className="text-stone-100 font-medium text-sm sm:text-base">
+              Due Date
+            </label>
+            <input
+              type="date"
+              name="dueDate"
+              value={formData.dueDate}
+              onChange={handleInputChange}
+              className="tf-input w-full sm:w-auto h-12 px-4 rounded-xl [color-scheme:dark]"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+            <label className="text-stone-100 font-medium text-sm sm:text-base">
+              Status
+            </label>
+            <div className="flex flex-row justify-start items-center gap-4 flex-wrap">
+              {["DO", "DOING", "DONE"].map((statusOption) => (
+                <label
+                  key={statusOption}
+                  className={`flex items-center gap-2 cursor-pointer rounded-lg px-3 py-2 border transition-all ${
+                    formData.status === statusOption
+                      ? "border-teal-400/40 bg-white/10 shadow-sm"
+                      : "border-transparent hover:bg-white/5"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="status"
+                    value={statusOption}
+                    checked={formData.status === statusOption}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 accent-teal-400 cursor-pointer"
+                  />
+                  <span className="text-stone-100 text-sm font-medium">
+                    {statusOption}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col w-full gap-4 p-4 bg-gradient-to-br from-teal-400/10 to-coral-500/10 rounded-xl border border-teal-400/20">
+            <h2 className="text-teal-300 font-medium text-sm sm:text-base">
+              Assign to
+            </h2>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="text"
+                name="name"
+                value={assignee.name}
+                onChange={handleAssigneeChange}
+                placeholder="Name"
+                className="tf-input flex-1 h-12 px-4 rounded-xl"
+              />
+              <input
+                type="email"
+                name="email"
+                value={assignee.email}
+                onChange={handleAssigneeChange}
+                placeholder="Email"
+                className="tf-input flex-1 h-12 px-4 rounded-xl"
+              />
+              <button
+                type="button"
+                onClick={addAssignee}
+                className="bg-teal-500 hover:bg-teal-400 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-sm whitespace-nowrap hover:scale-105 active:scale-95"
+              >
+                Add
+              </button>
+            </div>
+
+            {formData.assignedTo.length > 0 && (
+              <div className="mt-1 space-y-2">
+                <p className="text-stone-500 text-xs mb-2">Assigned members</p>
+                <div className="flex flex-wrap gap-2">
+                  {formData.assignedTo.map((person, index) => (
+                    <div
+                      key={index}
+                      className="inline-flex items-center gap-2 bg-white/10 border border-teal-400/30 text-teal-100 px-3 py-1.5 rounded-lg text-sm"
+                    >
+                      <span className="font-medium">{person.name}</span>
+                      <span className="text-teal-300/70">({person.email})</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = formData.assignedTo.filter(
+                            (_, i) => i !== index
+                          );
+                          setFormData({ ...formData, assignedTo: updated });
+                        }}
+                        className="ml-1 text-stone-500 hover:text-rose-700 transition-colors"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={createBoard}
+            disabled={submitting}
+            className="tf-btn-primary w-full h-12 mt-2 rounded-xl font-semibold text-base hover:scale-[1.015]"
+          >
+            {submitting ? "Creating..." : "Create Task"}
+          </button>
+        </div>
       </div>
     </div>
   );
