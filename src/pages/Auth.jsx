@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { BACKEND_URL } from "../config";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { BACKEND_URL, GOOGLE_AUTH_URL } from "../config";
 import axios from "axios";
 import TaskFlowLogo from "../assets/TaskFlow.png";
 import imgBoard from "../assets/auth-board.jpg";
@@ -39,6 +39,7 @@ const stories = [
 
 function Auth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const usernameUpRef = useRef(null);
   const emailUpRef = useRef(null);
@@ -52,6 +53,14 @@ function Auth() {
   const [error, setError] = useState(null);
   const [activeStory, setActiveStory] = useState(0);
   const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    const oauthError = searchParams.get("error");
+    if (oauthError) {
+      setError("Google sign-in failed. Please try again.");
+      navigate("/", { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   useEffect(() => {
     if (paused) return undefined;
@@ -305,6 +314,40 @@ function Auth() {
                 {error}
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = GOOGLE_AUTH_URL;
+              }}
+              className="w-full h-12 mb-5 inline-flex items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-stone-50 font-semibold text-sm transition-all duration-200 hover:scale-[1.015] active:scale-[0.985]"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="#EA4335"
+                  d="M12 10.2v3.6h5.1c-.2 1.2-.9 2.3-1.9 3l3.1 2.4c1.8-1.7 2.9-4.2 2.9-7.2 0-.7-.1-1.4-.2-2H12z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M6.6 14.3l-.7.5-2.3 1.8C5.1 19.5 8.3 21.6 12 21.6c2.4 0 4.4-.8 5.9-2.1l-3.1-2.4c-.8.6-1.9.9-2.8.9-2.2 0-4-1.5-4.7-3.5z"
+                />
+                <path
+                  fill="#4A90E2"
+                  d="M3.6 7.4C2.9 8.8 2.5 10.3 2.5 12s.4 3.2 1.1 4.6l3-2.3c-.2-.6-.3-1.2-.3-2.3 0-.8.1-1.6.3-2.3L3.6 7.4z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M12 5.4c1.3 0 2.5.5 3.4 1.3l2.6-2.6C16.4 2.6 14.4 1.8 12 1.8 8.3 1.8 5.1 3.9 3.6 7.4l3 2.3C7.9 6.9 9.8 5.4 12 5.4z"
+                />
+              </svg>
+              Continue with Google
+            </button>
+
+            <div className="relative mb-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-white/10" />
+              <span className="text-xs text-stone-500">or continue with email</span>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
 
             {mode === "login" ? (
               <form

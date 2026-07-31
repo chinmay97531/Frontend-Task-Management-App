@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { CreatingBoard } from "../components/CreateBoard.jsx";
 import { NavBar } from "../components/Navbar.jsx";
@@ -7,10 +8,13 @@ import { BACKEND_URL } from "../config.js";
 import { Tasks } from "../components/Tasks.jsx";
 
 export function Dashboard() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -36,8 +40,19 @@ export function Dashboard() {
   };
 
   useEffect(() => {
+    const token = searchParams.get("token");
+    if (token) {
+      localStorage.setItem("token", token);
+      navigate("/home", { replace: true });
+    }
+    setAuthReady(true);
+  }, [searchParams, navigate]);
+
+  useEffect(() => {
+    if (!authReady) return;
+    if (searchParams.get("token")) return;
     fetchTasks();
-  }, []);
+  }, [authReady, searchParams]);
 
   if (loading) {
     return (
