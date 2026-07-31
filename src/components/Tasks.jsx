@@ -63,9 +63,6 @@ export function Tasks({ index, task, refreshTasks }) {
   };
 
   const deleteTask = async () => {
-    if (!window.confirm(`Delete “${task.title}”? This cannot be undone.`)) {
-      return;
-    }
     try {
       await axios.delete(`${BACKEND_URL}/deleteTask/${task._id}`, {
         headers: { token },

@@ -234,7 +234,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
           <div className="relative inline-block text-left">
             <button
               onClick={dropDownMenu}
-              className="flex items-center gap-2 h-11 px-4 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-stone-100 transition-all duration-200 hover:scale-105 active:scale-95"
+              className="relative z-[60] flex items-center gap-2 h-11 px-4 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-stone-100 transition-all duration-200 hover:scale-105 active:scale-95"
               title="Filter tasks"
             >
               <img
@@ -245,7 +245,14 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
               <span className="text-sm font-medium hidden sm:inline">Filter</span>
             </button>
             {isOpen && (
-              <div className="absolute right-0 mt-2 w-72 tf-glass rounded-xl shadow-2xl z-50 max-h-[70vh] overflow-y-auto tf-animate-fade-in">
+              <>
+              <button
+                type="button"
+                aria-label="Close filter"
+                onClick={() => setIsOpen(false)}
+                className="fixed inset-0 z-[55] bg-[#0b1220]/45 backdrop-blur-md tf-animate-fade-in"
+              />
+              <div className="absolute right-0 mt-2 w-72 tf-glass rounded-xl shadow-2xl z-[60] max-h-[70vh] overflow-y-auto tf-animate-fade-in">
                 <ul className="py-2 text-sm">
                   <li className={filterSectionClass}>Recent Tasks</li>
                   <li
@@ -336,6 +343,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
                   </li>
                 </ul>
               </div>
+              </>
             )}
           </div>
 
