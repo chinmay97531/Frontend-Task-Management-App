@@ -40,8 +40,13 @@ const stories = [
 ];
 
 const oauthErrorMessages = {
-  google: "Google sign-in was cancelled or failed. Please try again.",
+  google:
+    "Google sign-in failed. Try again, or use email/password signup if your school Google account blocks this app.",
   google_not_configured: "Google sign-in is not configured on the server yet.",
+  google_access_denied:
+    "Google blocked this sign-in. School accounts like @thapar.edu often block unverified apps. Use a personal Gmail, ask your IT admin to allow the app, or sign up with email/password.",
+  google_no_email:
+    "Google did not share an email for this account. Allow the email permission and try again.",
 };
 
 function Auth() {
