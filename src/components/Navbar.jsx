@@ -15,12 +15,19 @@ function getInitials(name = "") {
   return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
 
-export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
+export function NavBar({
+  modalOpen,
+  setModalOpen,
+  setTasks,
+  refreshTasks,
+  filterOpen,
+  setFilterOpen,
+}) {
   const searchRef = useRef(null);
   const profileRef = useRef(null);
+  const filterRef = useRef(null);
   const navigate = useNavigate();
   const toast = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [allTasks, setAllTasks] = useState([]);
@@ -41,6 +48,17 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
     document.addEventListener("mousedown", onPointerDown);
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [profileOpen]);
+
+  useEffect(() => {
+    if (!filterOpen) return undefined;
+    const onPointerDown = (e) => {
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [filterOpen, setFilterOpen]);
 
   const fetchProfile = async () => {
     try {
@@ -123,7 +141,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
       );
       setTasks(response.data.tasks);
       setAllTasks(response.data.tasks);
-      setIsOpen(false);
+      setFilterOpen(false);
       setIsSearching(false);
       if (searchRef.current) {
         searchRef.current.value = "";
@@ -148,7 +166,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
   }
 
   function dropDownMenu() {
-    setIsOpen(!isOpen);
+    setFilterOpen(!filterOpen);
     setProfileOpen(false);
   }
 
@@ -163,7 +181,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
         <div
           onClick={() => {
             setModalOpen(false);
-            setIsOpen(false);
+            setFilterOpen(false);
             refreshTasks();
             fetchAllTasks();
             setIsSearching(false);
@@ -231,7 +249,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
             Search
           </button>
 
-          <div className="relative inline-block text-left">
+          <div className="relative inline-block text-left" ref={filterRef}>
             <button
               onClick={dropDownMenu}
               className="relative z-[60] flex items-center gap-2 h-11 px-4 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-stone-100 transition-all duration-200 hover:scale-105 active:scale-95"
@@ -244,14 +262,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
               />
               <span className="text-sm font-medium hidden sm:inline">Filter</span>
             </button>
-            {isOpen && (
-              <>
-              <button
-                type="button"
-                aria-label="Close filter"
-                onClick={() => setIsOpen(false)}
-                className="fixed inset-0 z-[55] bg-[#0b1220]/45 backdrop-blur-md tf-animate-fade-in"
-              />
+            {filterOpen && (
               <div className="absolute right-0 mt-2 w-72 tf-glass rounded-xl shadow-2xl z-[60] max-h-[70vh] overflow-y-auto tf-animate-fade-in">
                 <ul className="py-2 text-sm">
                   <li className={filterSectionClass}>Recent Tasks</li>
@@ -343,7 +354,6 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
                   </li>
                 </ul>
               </div>
-              </>
             )}
           </div>
 
@@ -363,7 +373,7 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
               type="button"
               onClick={() => {
                 setProfileOpen((open) => !open);
-                setIsOpen(false);
+                setFilterOpen(false);
               }}
               className="flex items-center gap-2.5 h-11 pl-1.5 pr-3 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-stone-100 transition-all duration-200 hover:scale-[1.02] active:scale-95"
               title="Account"

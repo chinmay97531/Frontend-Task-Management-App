@@ -14,6 +14,7 @@ export function Dashboard() {
   const toast = useToast();
   const [searchParams] = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -119,6 +120,8 @@ export function Dashboard() {
         setModalOpen={setModalOpen}
         setTasks={setTasks}
         refreshTasks={fetchTasks}
+        filterOpen={filterOpen}
+        setFilterOpen={setFilterOpen}
       />
       <CreatingBoard
         modalOpen={modalOpen}
@@ -126,7 +129,17 @@ export function Dashboard() {
         refreshTasks={fetchTasks}
       />
 
-      <div className="w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <div className="relative w-full flex-1">
+        {filterOpen && (
+          <button
+            type="button"
+            aria-label="Close filter"
+            onClick={() => setFilterOpen(false)}
+            className="absolute inset-0 z-30 bg-[#0b1220]/40 backdrop-blur-md tf-animate-fade-in"
+          />
+        )}
+
+      <div className="relative z-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {tasks.length > 0 && (
           <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 tf-animate-fade-up">
             <div>
@@ -225,6 +238,7 @@ export function Dashboard() {
             ))
           )}
         </div>
+      </div>
       </div>
     </div>
   );
