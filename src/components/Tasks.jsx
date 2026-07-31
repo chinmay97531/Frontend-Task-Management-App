@@ -5,6 +5,8 @@ import del from "../assets/delete.svg";
 import remove from "../assets/removeMem.svg";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
+import { useToast } from "./Toast";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const statusStyles = {
   DO: "bg-rose-50/80 text-rose-700 ring-rose-100/50",
@@ -13,15 +15,25 @@ const statusStyles = {
 };
 
 export function Tasks({ index, task, refreshTasks }) {
+  const toast = useToast();
   const date = new Date(task.dueDate);
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
+  const dueEnd = new Date(task.dueDate);
+  if (!Number.isNaN(dueEnd.getTime())) {
+    dueEnd.setHours(23, 59, 59, 999);
+  }
+  const isOverdue =
+    !Number.isNaN(dueEnd.getTime()) &&
+    task.status !== "DONE" &&
+    dueEnd.getTime() < Date.now();
 
   const [imp, setImp] = useState(task.important);
   const [status, setStatus] = useState(task.status);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -43,20 +55,25 @@ export function Tasks({ index, task, refreshTasks }) {
         }
       );
       setImp((prevImp) => !prevImp);
+      toast.success(imp ? "Removed from important." : "Marked important.");
       refreshTasks();
     } catch (error) {
-      console.error(error);
+      toast.error(getApiErrorMessage(error, "Could not update importance."));
     }
   };
 
   const deleteTask = async () => {
+    if (!window.confirm(`Delete “${task.title}”? This cannot be undone.`)) {
+      return;
+    }
     try {
       await axios.delete(`${BACKEND_URL}/deleteTask/${task._id}`, {
         headers: { token },
       });
+      toast.success("Task deleted.");
       refreshTasks();
     } catch (error) {
-      console.error(error);
+      toast.error(getApiErrorMessage(error, "Could not delete task."));
     }
   };
 
@@ -69,13 +86,16 @@ export function Tasks({ index, task, refreshTasks }) {
           headers: { token },
         }
       );
+      toast.success("Assignee removed.");
       refreshTasks();
     } catch (error) {
-      console.error(error);
+      toast.error(getApiErrorMessage(error, "Could not remove assignee."));
     }
   };
 
   const changeStatus = async (newStatus) => {
+    const previous = status;
+    setStatus(newStatus);
     try {
       await axios.post(
         `${BACKEND_URL}/changeStatus/${task._id}`,
@@ -84,9 +104,42 @@ export function Tasks({ index, task, refreshTasks }) {
           headers: { token },
         }
       );
-      setStatus(newStatus);
+      toast.success(`Status set to ${newStatus}.`);
     } catch (error) {
-      console.error(error);
+      setStatus(previous);
+      toast.error(getApiErrorMessage(error, "Could not update status."));
+    }
+  };
+
+  const addMember = async () => {
+    const name = newName.trim();
+    const email = newEmail.trim();
+    if (!name || !email) {
+      toast.error("Enter name and email.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Enter a valid email.");
+      return;
+    }
+
+    try {
+      setBusy(true);
+      await axios.put(
+        `${BACKEND_URL}/${task._id}/add-assignee`,
+        { name, email },
+        {
+          headers: { token },
+        }
+      );
+      setNewName("");
+      setNewEmail("");
+      toast.success("Member added.");
+      refreshTasks();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Could not add member."));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -152,10 +205,19 @@ export function Tasks({ index, task, refreshTasks }) {
           <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide">
             Due Date
           </div>
-          <div className="text-stone-100 text-sm font-medium bg-white/5 rounded-lg p-3 border border-white/10">
-            {`${day.toString().padStart(2, "0")}-${month
-              .toString()
-              .padStart(2, "0")}-${year.toString()}`}
+          <div
+            className={`text-sm font-medium rounded-lg p-3 border ${
+              isOverdue
+                ? "bg-rose-50/15 border-rose-400/30 text-rose-100"
+                : "bg-white/5 border-white/10 text-stone-100"
+            }`}
+          >
+            {Number.isNaN(date.getTime())
+              ? "No due date"
+              : `${day.toString().padStart(2, "0")}-${month
+                  .toString()
+                  .padStart(2, "0")}-${year.toString()}`}
+            {isOverdue ? " · Overdue" : ""}
           </div>
         </div>
       </div>
@@ -254,25 +316,12 @@ export function Tasks({ index, task, refreshTasks }) {
             onChange={(e) => setNewEmail(e.target.value)}
           />
           <button
-            className="bg-teal-500 hover:bg-teal-400 text-white px-4 sm:px-6 py-2.5 rounded-lg font-medium transition-all duration-200 shadow-sm whitespace-nowrap h-11 hover:scale-105 active:scale-95 text-sm sm:text-base flex-shrink-0"
-            onClick={async () => {
-              try {
-                await axios.put(
-                  `${BACKEND_URL}/${task._id}/add-assignee`,
-                  { name: newName, email: newEmail },
-                  {
-                    headers: { token },
-                  }
-                );
-                setNewName("");
-                setNewEmail("");
-                refreshTasks();
-              } catch (error) {
-                console.error(error);
-              }
-            }}
+            type="button"
+            disabled={busy}
+            className="bg-teal-500 hover:bg-teal-400 disabled:opacity-60 text-white px-4 sm:px-6 py-2.5 rounded-lg font-medium transition-all duration-200 shadow-sm whitespace-nowrap h-11 hover:scale-105 active:scale-95 text-sm sm:text-base flex-shrink-0"
+            onClick={addMember}
           >
-            Add Member
+            {busy ? "Adding..." : "Add Member"}
           </button>
         </div>
       </div>

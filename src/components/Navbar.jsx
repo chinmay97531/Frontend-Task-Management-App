@@ -5,17 +5,55 @@ import axios from "axios";
 import filter from "../assets/filter.svg";
 import { BACKEND_URL } from "../config.js";
 import TaskFlowLogo from "../assets/TaskFlow.png";
+import { useToast } from "./Toast.jsx";
+import { getApiErrorMessage } from "../utils/apiError.js";
+
+function getInitials(name = "") {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+}
 
 export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
   const searchRef = useRef(null);
+  const profileRef = useRef(null);
   const navigate = useNavigate();
+  const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const [allTasks, setAllTasks] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     fetchAllTasks();
+    fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (!profileOpen) return undefined;
+    const onPointerDown = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [profileOpen]);
+
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      const response = await axios.get(BACKEND_URL + "/me", {
+        headers: { token },
+      });
+      setUser(response.data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   const fetchAllTasks = async () => {
     try {
@@ -92,21 +130,26 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
       }
 
       if (filterType == "deleteCompleted" || filterType == "deletePastDue") {
-        window.location.reload();
+        toast.success("Cleanup complete.");
         refreshTasks();
+        return;
       }
+      toast.success("Filter applied.");
     } catch (error) {
-      console.error(error);
+      toast.error(getApiErrorMessage(error, "Could not apply filter."));
     }
   };
 
   function signOut() {
     localStorage.removeItem("token");
+    setProfileOpen(false);
+    toast.info("Signed out.");
     navigate("/");
   }
 
   function dropDownMenu() {
     setIsOpen(!isOpen);
+    setProfileOpen(false);
   }
 
   const filterItemClass =
@@ -300,19 +343,94 @@ export function NavBar({ modalOpen, setModalOpen, setTasks, refreshTasks }) {
             className="tf-btn-primary h-11 px-5 rounded-xl font-semibold text-sm cursor-pointer hover:scale-105 active:scale-95"
             onClick={() => {
               setModalOpen(!modalOpen);
+              setProfileOpen(false);
             }}
           >
             <span className="hidden sm:inline">Create Task</span>
             <span className="sm:hidden">+</span>
           </button>
 
-          <button
-            className="h-11 px-4 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-stone-100 font-medium text-sm transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95"
-            onClick={signOut}
-          >
-            <span className="hidden sm:inline">Logout</span>
-            <span className="sm:hidden">↪</span>
-          </button>
+          <div className="relative" ref={profileRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setProfileOpen((open) => !open);
+                setIsOpen(false);
+              }}
+              className="flex items-center gap-2.5 h-11 pl-1.5 pr-3 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-stone-100 transition-all duration-200 hover:scale-[1.02] active:scale-95"
+              title="Account"
+            >
+              {user?.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt={user.username || "User"}
+                  referrerPolicy="no-referrer"
+                  className="h-8 w-8 rounded-full object-cover ring-2 ring-teal-400/40"
+                />
+              ) : (
+                <span className="h-8 w-8 rounded-full grid place-items-center text-xs font-bold bg-gradient-to-br from-teal-400 to-coral-500 text-white ring-2 ring-white/20">
+                  {getInitials(user?.username || user?.email || "U")}
+                </span>
+              )}
+              <span className="hidden sm:block text-sm font-medium max-w-[9rem] truncate">
+                {user?.username || "Account"}
+              </span>
+              <svg
+                className={`h-4 w-4 text-stone-400 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {profileOpen && (
+              <div className="absolute right-0 mt-2 w-64 tf-glass rounded-xl shadow-2xl z-50 tf-animate-fade-in overflow-hidden">
+                <div className="px-4 py-3 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    {user?.avatar ? (
+                      <img
+                        src={user.avatar}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="h-11 w-11 rounded-full object-cover ring-2 ring-teal-400/40"
+                      />
+                    ) : (
+                      <span className="h-11 w-11 rounded-full grid place-items-center text-sm font-bold bg-gradient-to-br from-teal-400 to-coral-500 text-white">
+                        {getInitials(user?.username || user?.email || "U")}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-stone-50 truncate">
+                        {user?.username || "User"}
+                      </p>
+                      <p className="text-xs text-stone-500 truncate">
+                        {user?.email || ""}
+                      </p>
+                      {user?.authProvider === "google" && (
+                        <p className="mt-1 text-[10px] uppercase tracking-wider text-teal-300/90">
+                          Google account
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="w-full text-left px-4 py-3 text-sm text-rose-200 hover:bg-rose-50/10 transition-colors"
+                >
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,8 @@ import TaskFlowLogo from "../assets/TaskFlow.png";
 import imgBoard from "../assets/auth-board.jpg";
 import imgTeam from "../assets/auth-team.jpg";
 import imgFocus from "../assets/auth-focus.jpg";
+import { getApiErrorMessage } from "../utils/apiError";
+import { useToast } from "../components/Toast";
 
 const stories = [
   {
@@ -37,9 +39,15 @@ const stories = [
   },
 ];
 
+const oauthErrorMessages = {
+  google: "Google sign-in was cancelled or failed. Please try again.",
+  google_not_configured: "Google sign-in is not configured on the server yet.",
+};
+
 function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const toast = useToast();
 
   const usernameUpRef = useRef(null);
   const emailUpRef = useRef(null);
@@ -55,12 +63,22 @@ function Auth() {
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
+    if (localStorage.getItem("token") && !searchParams.get("error")) {
+      navigate("/home", { replace: true });
+    }
+  }, [navigate, searchParams]);
+
+  useEffect(() => {
     const oauthError = searchParams.get("error");
     if (oauthError) {
-      setError("Google sign-in failed. Please try again.");
+      const message =
+        oauthErrorMessages[oauthError] ||
+        "Google sign-in failed. Please try again.";
+      setError(message);
+      toast.error(message);
       navigate("/", { replace: true });
     }
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, toast]);
 
   useEffect(() => {
     if (paused) return undefined;
@@ -75,11 +93,26 @@ function Auth() {
   const handleSignUpSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    const username = usernameUpRef.current.value.trim();
+    const email = emailUpRef.current.value.trim();
+    const password = passwordUpRef.current.value;
+
+    if (username.length < 2) {
+      setError("Username must be at least 2 characters.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    if (password.length < 3) {
+      setError("Password must be at least 3 characters.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const username = usernameUpRef.current.value;
-      const email = emailUpRef.current.value;
-      const password = passwordUpRef.current.value;
       const response = await axios.post(BACKEND_URL + "/signup", {
         username,
         email,
@@ -88,9 +121,12 @@ function Auth() {
 
       const jwt = response.data.token;
       localStorage.setItem("token", jwt);
+      toast.success("Account created. Welcome to TaskFlow!");
       navigate("/home");
     } catch (err) {
-      setError(err.response?.data?.message || "Sign up failed. Please try again.");
+      const message = getApiErrorMessage(err, "Sign up failed. Please try again.");
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -99,10 +135,17 @@ function Auth() {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    const email = emailInRef.current.value.trim();
+    const password = passwordInRef.current.value;
+
+    if (!email || !password) {
+      setError("Email and password are required.");
+      return;
+    }
+
     setLoading(true);
     try {
-      const email = emailInRef.current.value;
-      const password = passwordInRef.current.value;
       const response = await axios.post(BACKEND_URL + "/signin", {
         email,
         password,
@@ -110,9 +153,15 @@ function Auth() {
 
       const jwt = response.data.token;
       localStorage.setItem("token", jwt);
+      toast.success("Signed in successfully.");
       navigate("/home");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Check your credentials.");
+      const message = getApiErrorMessage(
+        err,
+        "Login failed. Check your credentials."
+      );
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

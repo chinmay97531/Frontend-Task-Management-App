@@ -1,19 +1,33 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { BACKEND_URL } from "../config";
+import { useToast } from "./Toast";
+import { getApiErrorMessage } from "../utils/apiError";
+
+const emptyForm = {
+  name: "",
+  description: "",
+  label: "",
+  dueDate: "",
+  status: "DO",
+  assignedTo: [],
+};
 
 export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    label: "",
-    dueDate: "",
-    status: "",
-    assignedTo: [],
-  });
-
+  const toast = useToast();
+  const [formData, setFormData] = useState(emptyForm);
   const [assignee, setAssignee] = useState({ name: "", email: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState(null);
+
+  useEffect(() => {
+    if (!modalOpen) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" && !submitting) setModalOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [modalOpen, submitting, setModalOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -21,6 +35,7 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
       ...prev,
       [name]: value,
     }));
+    setFormError(null);
   };
 
   const handleAssigneeChange = (e) => {
@@ -32,43 +47,78 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
   };
 
   const addAssignee = () => {
-    if (assignee.name && assignee.email) {
-      setFormData((prev) => ({
-        ...prev,
-        assignedTo: [...prev.assignedTo, assignee],
-      }));
-      setAssignee({ name: "", email: "" });
+    const name = assignee.name.trim();
+    const email = assignee.email.trim();
+
+    if (!name || !email) {
+      toast.error("Enter both name and email for the assignee.");
+      return;
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Enter a valid assignee email.");
+      return;
+    }
+    if (formData.assignedTo.some((person) => person.email === email)) {
+      toast.info("That person is already assigned.");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      assignedTo: [...prev.assignedTo, { name, email }],
+    }));
+    setAssignee({ name: "", email: "" });
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) return "Title is required.";
+    if (!formData.description.trim()) return "Description is required.";
+    if (!formData.label.trim()) return "Label is required.";
+    if (!formData.dueDate) return "Due date is required.";
+    if (!formData.status) return "Pick a status.";
+    if (formData.assignedTo.length === 0) {
+      return "Add at least one assignee.";
+    }
+    return null;
   };
 
   const createBoard = async () => {
+    const validationError = validateForm();
+    if (validationError) {
+      setFormError(validationError);
+      toast.error(validationError);
+      return;
+    }
+
     try {
       setSubmitting(true);
+      setFormError(null);
       const token = localStorage.getItem("token");
 
-      const payload = {
-        ...formData,
-      };
-
-      const res = await axios.post(BACKEND_URL + "/CreateTask", payload, {
-        headers: {
-          token: token,
+      await axios.post(
+        BACKEND_URL + "/CreateTask",
+        {
+          ...formData,
+          name: formData.name.trim(),
+          description: formData.description.trim(),
+          label: formData.label.trim(),
         },
-      });
-      console.log(res.data);
+        {
+          headers: {
+            token: token,
+          },
+        }
+      );
 
       setModalOpen(false);
-      setFormData({
-        name: "",
-        description: "",
-        label: "",
-        dueDate: "",
-        status: "",
-        assignedTo: [],
-      });
+      setFormData(emptyForm);
+      setAssignee({ name: "", email: "" });
+      toast.success("Task created.");
       refreshTasks();
     } catch (error) {
-      console.error("Error creating board:", error);
+      const message = getApiErrorMessage(error, "Could not create task.");
+      setFormError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +132,7 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0b1220]/70 backdrop-blur-sm tf-animate-fade-in"
       onClick={(e) => {
-        if (e.target === e.currentTarget) setModalOpen(false);
+        if (e.target === e.currentTarget && !submitting) setModalOpen(false);
       }}
     >
       <div className="flex flex-col w-full max-w-2xl max-h-[90vh] overflow-y-auto gap-5 rounded-3xl tf-glass shadow-[0_24px_60px_rgba(0,0,0,0.45)] p-6 sm:p-8 tf-animate-fade-up">
@@ -97,13 +147,19 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
           </div>
           <button
             type="button"
-            onClick={() => setModalOpen(false)}
+            onClick={() => !submitting && setModalOpen(false)}
             className="h-9 w-9 rounded-xl border border-white/15 text-stone-500 hover:bg-white/10 hover:text-stone-50 transition-colors"
             aria-label="Close"
           >
             ×
           </button>
         </div>
+
+        {formError && (
+          <div className="rounded-xl border border-rose-400/30 bg-rose-50/20 px-4 py-3 text-sm text-rose-100">
+            {formError}
+          </div>
+        )}
 
         <div className="w-full space-y-5">
           <div>
@@ -211,6 +267,12 @@ export function CreatingBoard({ modalOpen, setModalOpen, refreshTasks }) {
                 onChange={handleAssigneeChange}
                 placeholder="Email"
                 className="tf-input flex-1 h-12 px-4 rounded-xl"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addAssignee();
+                  }
+                }}
               />
               <button
                 type="button"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -6,9 +6,12 @@ import { CreatingBoard } from "../components/CreateBoard.jsx";
 import { NavBar } from "../components/Navbar.jsx";
 import { BACKEND_URL } from "../config.js";
 import { Tasks } from "../components/Tasks.jsx";
+import { getApiErrorMessage } from "../utils/apiError.js";
+import { useToast } from "../components/Toast.jsx";
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
   const [modalOpen, setModalOpen] = useState(false);
   const [tasks, setTasks] = useState([]);
@@ -16,9 +19,14 @@ export function Dashboard() {
   const [error, setError] = useState(null);
   const [authReady, setAuthReady] = useState(false);
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
+      setError(null);
       const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/", { replace: true });
+        return;
+      }
 
       const response = await axios.post(
         BACKEND_URL + "/GetTask",
@@ -30,29 +38,37 @@ export function Dashboard() {
         }
       );
 
-      setTasks(response.data.tasks);
+      setTasks(response.data.tasks || []);
       setLoading(false);
     } catch (err) {
       console.error(err);
-      setError("Error fetching tasks.");
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("token");
+        toast.error("Session expired. Please sign in again.");
+        navigate("/", { replace: true });
+        return;
+      }
+      setError(getApiErrorMessage(err, "Could not load your tasks."));
       setLoading(false);
     }
-  };
+  }, [navigate, toast]);
 
   useEffect(() => {
     const token = searchParams.get("token");
     if (token) {
       localStorage.setItem("token", token);
+      toast.success("Signed in with Google.");
       navigate("/home", { replace: true });
     }
     setAuthReady(true);
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, toast]);
 
   useEffect(() => {
     if (!authReady) return;
     if (searchParams.get("token")) return;
+    setLoading(true);
     fetchTasks();
-  }, [authReady, searchParams]);
+  }, [authReady, searchParams, fetchTasks]);
 
   if (loading) {
     return (
@@ -66,22 +82,35 @@ export function Dashboard() {
   if (error) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen tf-app-bg font-sans px-4">
-        <div className="rounded-2xl border border-rose-100/40 bg-rose-50/80 px-6 py-5 text-rose-700 shadow-sm">
+        <div className="rounded-2xl border border-rose-400/30 bg-rose-50/15 px-6 py-5 text-rose-100 shadow-sm max-w-md text-center">
           <h2 className="font-semibold">{error}</h2>
-          <button
-            onClick={() => {
-              setError(null);
-              setLoading(true);
-              fetchTasks();
-            }}
-            className="mt-3 text-sm font-medium text-teal-400 underline underline-offset-2 hover:text-teal-300"
-          >
-            Try again
-          </button>
+          <div className="mt-4 flex items-center justify-center gap-3">
+            <button
+              onClick={() => {
+                setLoading(true);
+                fetchTasks();
+              }}
+              className="text-sm font-medium rounded-lg bg-teal-500/90 hover:bg-teal-400 px-4 py-2 text-white transition-colors"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                navigate("/", { replace: true });
+              }}
+              className="text-sm font-medium text-stone-400 hover:text-stone-200 underline underline-offset-2"
+            >
+              Back to login
+            </button>
+          </div>
         </div>
       </div>
     );
   }
+
+  const doneCount = tasks.filter((t) => t.status === "DONE").length;
+  const doingCount = tasks.filter((t) => t.status === "DOING").length;
 
   return (
     <div className="min-h-screen flex flex-col items-center tf-app-bg text-stone-50 font-sans">
@@ -99,15 +128,23 @@ export function Dashboard() {
 
       <div className="w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         {tasks.length > 0 && (
-          <div className="mb-8 flex items-end justify-between gap-4 tf-animate-fade-up">
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 tf-animate-fade-up">
             <div>
               <h2 className="font-display text-3xl font-semibold tracking-tight bg-gradient-to-r from-teal-300 via-teal-400 to-coral-400 bg-clip-text text-transparent">
                 Your Tasks
               </h2>
               <p className="mt-1 text-sm text-stone-500">
-                {tasks.length} {tasks.length === 1 ? "task" : "tasks"} total
+                {tasks.length} total · {doingCount} in progress · {doneCount}{" "}
+                done
               </p>
             </div>
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="tf-btn-primary h-11 px-5 rounded-xl text-sm font-semibold self-start sm:self-auto"
+            >
+              + New task
+            </button>
           </div>
         )}
 
@@ -132,13 +169,28 @@ export function Dashboard() {
                 </div>
 
                 <h1 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight text-stone-50 mb-3">
-                  No tasks yet
+                  Your board is ready
                 </h1>
 
                 <p className="mt-2 max-w-md text-base text-stone-500 leading-relaxed">
-                  Get started by creating your first task. Organize your work,
-                  set deadlines, and track progress all in one place.
+                  Create a task, assign someone, set a due date, and move it from
+                  To Do → Doing → Done. TaskFlow keeps the work clear and moving.
                 </p>
+
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg text-left">
+                  {[
+                    "Write a clear title & label",
+                    "Assign an owner",
+                    "Track status as you go",
+                  ].map((tip) => (
+                    <div
+                      key={tip}
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-3 text-xs text-stone-300"
+                    >
+                      {tip}
+                    </div>
+                  ))}
+                </div>
 
                 <button
                   onClick={() => setModalOpen(true)}
@@ -166,7 +218,7 @@ export function Dashboard() {
               <div
                 key={task._id || index}
                 className="tf-animate-fade-up"
-                style={{ animationDelay: `${index * 80}ms` }}
+                style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
               >
                 <Tasks index={index} task={task} refreshTasks={fetchTasks} />
               </div>
