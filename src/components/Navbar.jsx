@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
+import { FaSearch, FaFilter } from "react-icons/fa";
 import axios from "axios";
 
 import filter from "../assets/filter.svg";
@@ -16,7 +17,6 @@ function getInitials(name = "") {
 }
 
 export function NavBar({
-  modalOpen,
   setModalOpen,
   setTasks,
   refreshTasks,
@@ -260,7 +260,7 @@ export function NavBar({
             className="h-11 px-5 bg-teal-500/90 hover:bg-teal-400 text-white font-semibold text-sm rounded-xl transition-all duration-200 shadow-sm cursor-pointer hover:scale-105 active:scale-95"
             onClick={handleSearch}
           >
-            Search
+            <FaSearch />
           </button>
 
           <div className="relative inline-block text-left" ref={filterRef}>
@@ -269,12 +269,7 @@ export function NavBar({
               className="relative z-[60] flex items-center gap-2 h-11 px-4 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-stone-100 transition-all duration-200 hover:scale-105 active:scale-95"
               title="Filter tasks"
             >
-              <img
-                src={filter}
-                alt="Filter"
-                className="w-5 h-5 brightness-0 invert opacity-80"
-              />
-              <span className="text-sm font-medium hidden sm:inline">Filter</span>
+              <FaFilter />
             </button>
             {filterOpen && (
               <div className="absolute right-0 mt-2 w-72 tf-glass rounded-xl shadow-2xl z-[60] max-h-[70vh] overflow-y-auto tf-animate-fade-in">
@@ -371,17 +366,6 @@ export function NavBar({
             )}
           </div>
 
-          <button
-            className="tf-btn-primary h-11 px-5 rounded-xl font-semibold text-sm cursor-pointer hover:scale-105 active:scale-95"
-            onClick={() => {
-              setModalOpen(!modalOpen);
-              setProfileOpen(false);
-            }}
-          >
-            <span className="hidden sm:inline">Create Task</span>
-            <span className="sm:hidden">+</span>
-          </button>
-
           <div className="relative" ref={profileRef}>
             <button
               type="button"
@@ -389,13 +373,14 @@ export function NavBar({
                 setProfileOpen((open) => !open);
                 setFilterOpen(false);
               }}
-              className="flex items-center gap-2.5 h-11 pl-1.5 pr-3 bg-white/5 hover:bg-white/10 border border-white/15 rounded-xl text-stone-100 transition-all duration-200 hover:scale-[1.02] active:scale-95"
-              title="Account"
+              className="h-11 w-11 grid place-items-center rounded-full bg-white/5 hover:bg-white/10 border border-white/15 transition-all duration-200 hover:scale-[1.03] active:scale-95"
+              title={user?.username || "Account"}
+              aria-label="Account"
             >
               {user?.avatar ? (
                 <img
                   src={user.avatar}
-                  alt={user.username || "User"}
+                  alt=""
                   referrerPolicy="no-referrer"
                   className="h-8 w-8 rounded-full object-cover ring-2 ring-teal-400/40"
                 />
@@ -404,22 +389,6 @@ export function NavBar({
                   {getInitials(user?.username || user?.email || "U")}
                 </span>
               )}
-              <span className="hidden sm:block text-sm font-medium max-w-[9rem] truncate">
-                {user?.username || "Account"}
-              </span>
-              <svg
-                className={`h-4 w-4 text-stone-400 transition-transform ${profileOpen ? "rotate-180" : ""}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
             </button>
 
             {profileOpen && (

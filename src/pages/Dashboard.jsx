@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 
 import { CreatingBoard } from "../components/CreateBoard.jsx";
+import { AskAI } from "../components/AskAI.jsx";
 import { NavBar } from "../components/Navbar.jsx";
 import { BACKEND_URL } from "../config.js";
 import { Tasks } from "../components/Tasks.jsx";
@@ -117,7 +118,6 @@ export function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col items-center tf-app-bg text-stone-50 font-sans">
       <NavBar
-        modalOpen={modalOpen}
         setModalOpen={setModalOpen}
         setTasks={setTasks}
         refreshTasks={fetchTasks}
@@ -129,6 +129,7 @@ export function Dashboard() {
         setModalOpen={setModalOpen}
         refreshTasks={fetchTasks}
       />
+      <AskAI refreshTasks={fetchTasks} />
 
       <div className="relative w-full flex-1">
         {filterOpen && (
@@ -141,7 +142,7 @@ export function Dashboard() {
         )}
 
       <div className="relative z-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        {safeTasks.length > 0 && (
+          {safeTasks.length > 0 && (
           <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4 tf-animate-fade-up">
             <div>
               <h2 className="font-display text-3xl font-semibold tracking-tight bg-gradient-to-r from-teal-300 via-teal-400 to-coral-400 bg-clip-text text-transparent">
@@ -152,13 +153,30 @@ export function Dashboard() {
                 done
               </p>
             </div>
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             <button
               type="button"
               onClick={() => setModalOpen(true)}
-              className="tf-btn-primary h-11 px-5 rounded-xl text-sm font-semibold self-start sm:self-auto"
+              className="tf-btn-primary h-11 w-11 rounded-xl grid place-items-center hover:scale-105 active:scale-95"
+              title="Add task"
+              aria-label="Add task"
             >
-              + New task
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
             </button>
+            </div>
           </div>
         )}
 
@@ -206,25 +224,27 @@ export function Dashboard() {
                   ))}
                 </div>
 
-                <button
-                  onClick={() => setModalOpen(true)}
-                  className="tf-btn-primary mt-8 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-semibold hover:scale-105 active:scale-95"
-                >
-                  <svg
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    className="tf-btn-primary inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-semibold hover:scale-105 active:scale-95"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Create your first task
-                </button>
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Create your first task
+                  </button>
+                </div>
               </div>
             </div>
           ) : (

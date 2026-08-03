@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router";
 import { BACKEND_URL, GOOGLE_AUTH_URL } from "../config";
 import axios from "axios";
 import TaskFlowLogo from "../assets/TaskFlow.png";

@@ -1,4 +1,4 @@
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router";
 
 export function ProtectedRoute({ children }) {
   const [searchParams] = useSearchParams();
