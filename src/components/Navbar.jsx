@@ -3,18 +3,12 @@ import { useNavigate } from "react-router";
 import { FaSearch, FaFilter } from "react-icons/fa";
 import axios from "axios";
 
-import filter from "../assets/filter.svg";
+
 import { BACKEND_URL } from "../config.js";
 import TaskFlowLogo from "../assets/TaskFlow.png";
 import { useToast } from "./Toast.jsx";
 import { getApiErrorMessage } from "../utils/apiError.js";
-
-function getInitials(name = "") {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-}
+import { UserAvatar } from "./UserAvatar.jsx";
 
 export function NavBar({
   setModalOpen,
@@ -377,36 +371,22 @@ export function NavBar({
               title={user?.username || "Account"}
               aria-label="Account"
             >
-              {user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt=""
-                  referrerPolicy="no-referrer"
-                  className="h-8 w-8 rounded-full object-cover ring-2 ring-teal-400/40"
-                />
-              ) : (
-                <span className="h-8 w-8 rounded-full grid place-items-center text-xs font-bold bg-gradient-to-br from-teal-400 to-coral-500 text-white ring-2 ring-white/20">
-                  {getInitials(user?.username || user?.email || "U")}
-                </span>
-              )}
+              <UserAvatar
+                src={user?.avatar}
+                name={user?.username || user?.email || "U"}
+                size="sm"
+              />
             </button>
 
             {profileOpen && (
               <div className="absolute right-0 mt-2 w-64 tf-glass rounded-xl shadow-2xl z-50 tf-animate-fade-in overflow-hidden">
                 <div className="px-4 py-3 border-b border-white/10">
                   <div className="flex items-center gap-3">
-                    {user?.avatar ? (
-                      <img
-                        src={user.avatar}
-                        alt=""
-                        referrerPolicy="no-referrer"
-                        className="h-11 w-11 rounded-full object-cover ring-2 ring-teal-400/40"
-                      />
-                    ) : (
-                      <span className="h-11 w-11 rounded-full grid place-items-center text-sm font-bold bg-gradient-to-br from-teal-400 to-coral-500 text-white">
-                        {getInitials(user?.username || user?.email || "U")}
-                      </span>
-                    )}
+                    <UserAvatar
+                      src={user?.avatar}
+                      name={user?.username || user?.email || "U"}
+                      size="lg"
+                    />
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-stone-50 truncate">
                         {user?.username || "User"}

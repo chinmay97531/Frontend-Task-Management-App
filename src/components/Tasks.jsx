@@ -3,6 +3,7 @@ import axios from "axios";
 import { BACKEND_URL } from "../config";
 import { useToast } from "./Toast";
 import { getApiErrorMessage } from "../utils/apiError";
+import { UserAvatar } from "./UserAvatar";
 
 const STATUS_META = {
   DO: {
@@ -24,13 +25,6 @@ const STATUS_META = {
     bar: "bg-teal-400",
   },
 };
-
-function getInitials(name = "") {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-}
 
 function formatDueDate(date) {
   if (Number.isNaN(date.getTime())) return "No due date";
@@ -524,9 +518,11 @@ export function Tasks({ index, task, refreshTasks }) {
                   key={`${person.email}-${idx}`}
                   className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-2.5 py-2 ring-1 ring-white/8 transition-colors hover:bg-white/[0.06]"
                 >
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-teal-400/80 to-violet-500/80 text-[11px] font-bold text-white shadow-sm">
-                    {getInitials(person.name)}
-                  </span>
+                  <UserAvatar
+                    src={person.avatar}
+                    name={person.name}
+                    size="md"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-stone-50">
                       {person.name}
